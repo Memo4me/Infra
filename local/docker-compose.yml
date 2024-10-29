@@ -21,6 +21,9 @@ services:
       - "5101:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - OIDC_AUTHORITY=http://host.docker.internal:7270/realms/MemoRealm
+      - OIDC_METADATA_ADDRESS=http://host.docker.internal:7270/realms/MemoRealm/.well-known/openid-configuration
+      - OIDC_CLIENT_SECRET=your-client-secret
     container_name: memo4me-ui
   
   db:
