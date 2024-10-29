@@ -1,17 +1,31 @@
-
+name: memo4me
 services:
   api:
     build:
       context: ../../App/
-      dockerfile: devops/Dockerfile
+      dockerfile: devops/API.Dockerfile
     ports:
-      - "8080:8080"
+      - "8002:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-    container_name: memo4me_web_api
+    container_name: memo4me-api
     depends_on:
       - db
+      - keycloak
 
+  ui:
+    build:
+      context: ../../App/
+      dockerfile: devops/UI.Dockerfile
+    ports:
+      - "5101:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - OIDC_AUTHORITY=http://host.docker.internal:7270/realms/MemoRealm
+      - OIDC_METADATA_ADDRESS=http://host.docker.internal:7270/realms/MemoRealm/.well-known/openid-configuration
+      - OIDC_CLIENT_SECRET=your-client-secret
+    container_name: memo4me-ui
+  
   db:
     image: postgres:latest
     ports:
@@ -19,10 +33,25 @@ services:
     environment:
       POSTGRES_DB: MemoDb
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
+      POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    container_name: db_postgresql_container
+    restart: unless-stopped
+    container_name: memo4me-db
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    ports:
+      - "7270:8080"
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+    volumes:
+      - ./keycloak-setup/identity:/opt/keycloak/data
+    command: ["start-dev"]
+    restart: unless-stopped
+    container_name: memo4me-keycloak
 
 volumes:
   postgres_data:
+  keycloak_data:
